@@ -1,0 +1,77 @@
+const BASE_URL = 'http://127.0.0.1:8000/api/jobs/';
+
+export async function listJobs() {
+	const res = await fetch(BASE_URL);
+	if (!res.ok) throw new Error('Failed to fetch jobs');
+	return res.json();
+}
+
+export async function createJob(jobData: {
+	title: string;
+	description: string;
+	status: string;
+	jobtype: string;
+	jobtime: string;
+	required_skills: string;
+	domain: string;
+}) {
+	const res = await fetch(BASE_URL, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify(jobData),
+	});
+	if (!res.ok) throw new Error('Failed to create job');
+	return res.json();
+}
+
+export async function getJob(id: string | number) {
+	const res = await fetch(`${BASE_URL}${id}/`);
+	if (!res.ok) throw new Error('Failed to fetch job');
+	return res.json();
+}
+
+export async function updateJob(id: string | number, jobData: {
+	title: string;
+	description: string;
+	status: string;
+	jobtype: string;
+	jobtime: string;
+	required_skills: string;
+	domain: string;
+}) {
+	const res = await fetch(`${BASE_URL}${id}/`, {
+		method: 'PUT',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify(jobData),
+	});
+	if (!res.ok) throw new Error('Failed to update job');
+	return res.json();
+}
+
+export async function patchJob(id: string | number, patchData: Partial<{
+	title: string;
+	description: string;
+	status: string;
+	jobtype: string;
+	jobtime: string;
+	required_skills: string;
+	domain: string;
+}>) {
+	const res = await fetch(`${BASE_URL}${id}/`, {
+		method: 'PATCH',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify(patchData),
+	});
+	if (!res.ok) throw new Error('Failed to patch job');
+	return res.json();
+}
+
+export async function deleteJob(id: string | number) {
+	const res = await fetch(`${BASE_URL}${id}/`, {
+		method: 'DELETE',
+	});
+	if (!res.ok) throw new Error('Failed to delete job');
+	return true;
+}
+
+	

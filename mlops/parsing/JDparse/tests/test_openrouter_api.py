@@ -4,7 +4,7 @@ import requests
 import json
 
 # Use an environment variable for the API key to avoid committing secrets.
-api_key = "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"
+api_key = "api_key"
 # if not api_key:
 #     print("Error: OPENROUTER_API_KEY environment variable is not set.\n" \
 #           "Set it and re-run the script. Example (cmd.exe):\n" \

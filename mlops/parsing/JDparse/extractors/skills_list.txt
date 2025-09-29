@@ -1,0 +1,12 @@
+python
+django
+flask
+react
+node.js
+aws
+docker
+kubernetes
+sql
+tensorflow
+pytorch
+machine learning

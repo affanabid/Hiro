@@ -3,7 +3,6 @@ import sys
 import requests
 import json
 
-# Use an environment variable for the API key to avoid committing secrets.
 api_key = "api_key"
 # if not api_key:
 #     print("Error: OPENROUTER_API_KEY environment variable is not set.\n" \

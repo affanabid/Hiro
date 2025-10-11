@@ -30,6 +30,12 @@ def parse_job_description(jd_text: str) -> FunctionalJD:
         print("LLM returned invalid JSON, using empty schema.")
         jd_data = {}
 
+    # ✅ Extract projects first using rule-based method
+    projects = extract_projects(jd_text)
+    if not projects:
+        # fallback to LLM parsed projects
+        projects = jd_data.get("projects", [])
+
     # 4. Map LLM output to schema with defaults
     parsed = FunctionalJD(
         title = jd_data.get("title"),

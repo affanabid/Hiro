@@ -3,6 +3,8 @@ import os
 import sys
 import psycopg2
 from psycopg2.extras import RealDictCursor
+from dotenv import load_dotenv
+load_dotenv()
 
 # Read DB connection params from environment (recommended)
 DB_CONFIG = {

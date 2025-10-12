@@ -30,6 +30,12 @@ def parse_job_description(jd_text: str) -> FunctionalJD:
         print("LLM returned invalid JSON, using empty schema.")
         jd_data = {}
 
+    # ✅ Extract projects first using rule-based method
+    projects = extract_projects(jd_text)
+    if not projects:
+        # fallback to LLM parsed projects
+        projects = jd_data.get("projects", [])
+
     # 4. Map LLM output to schema with defaults
     parsed = FunctionalJD(
         title = jd_data.get("title"),
@@ -50,33 +56,19 @@ def parse_job_description(jd_text: str) -> FunctionalJD:
 
 if __name__ == "__main__":
     sample = """
-    Job Title: Backend Engineer (Python/Django)
-
-    We are looking for a Backend Engineer to join our team and help build scalable APIs and data-driven applications.
-
-    Responsibilities:
-    - Design, develop, and maintain backend services using Python and Django
-    - Work with relational databases (PostgreSQL, MySQL) and write optimized SQL queries
-    - Build RESTful and GraphQL APIs to power web and mobile applications
-    - Collaborate with front-end developers, DevOps, and product managers to deliver high-quality features
-    - Implement authentication, authorization, and security best practices
-    - Optimize application performance and handle large-scale traffic
-
-    Requirements:
-    - Bachelor's or Master's degree in Computer Science, Software Engineering, or related field
-    - 3-9 years of professional experience in backend development
-    - Strong proficiency in Python and Django
-    - Experience with containerization (Docker, Kubernetes) and cloud platforms (AWS/GCP/Azure)
-    - Solid understanding of CI/CD pipelines and version control (Git)
-    - Hands-on experience with caching (Redis, Memcached) and message brokers (RabbitMQ, Kafka)
-    - Knowledge of software design patterns, data structures, and algorithms
-    - Familiarity with microservices architecture
-
-    Preferred Qualifications:
-    - Experience with machine learning model deployment
-    - Open-source contributions or personal projects on GitHub
-    - Certifications in cloud computing or DevOps tools
-
+    Data Scientist - Remote
+    We are hiring a Data Scientist to help us build data-driven products and insights.
+    Key responsibilities:
+    - Develop and deploy machine learning models for prediction and classification
+    - Analyze large datasets using Python, Pandas, and SQL
+    - Communicate insights effectively to stakeholders
+    Required skills:
+    - 3+ years of experience as a Data Scientist or ML Engineer
+    - Strong knowledge of statistics, Python, scikit-learn, and visualization tools (Matplotlib, Seaborn, Power BI)
+    - Experience working with cloud platforms (AWS or GCP)
+    Preferred qualifications:
+    - Master's or Ph.D. in Computer Science, Data Science, or related field
+    - Experience with deep learning frameworks like TensorFlow or PyTorch
     """
     parsed = parse_job_description(sample)
     # print(parsed.json(indent=2))

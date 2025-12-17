@@ -23,6 +23,9 @@ class ApplicantProfileSerializer(serializers.ModelSerializer):
             'certifications',
             'summary',
             'total_experience_years',
+            'github_url',
+            'github_username',
+            'github_insights',
         ]
         read_only_fields = ['id', 'extracted_at', 'applicant_name', 'applicant_email']
 

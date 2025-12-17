@@ -45,6 +45,22 @@ interface ApplicantProfile {
     total_experience_years?: number | null
     extracted_at: string
     extraction_source: string
+    github_url?: string | null
+    github_username?: string | null
+    github_insights?: {
+        username: string
+        repo_count: number
+        top_languages: { name: string; percent: number }[]
+        repos: {
+            name_with_owner: string
+            pushed_at?: string | null
+            updated_at?: string | null
+            stars: number
+            forks: number
+            languages: { name: string; percent: number }[]
+            stack_labels: string[]
+        }[]
+    } | null
 }
 
 interface ApplicantProfileModalProps {
@@ -64,6 +80,7 @@ const ApplicantProfileModal = ({
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [skillsExpanded, setSkillsExpanded] = useState(false)
+    const [githubExpanded, setGithubExpanded] = useState(false)
 
     const fetchProfile = async () => {
         if (!applicantId) return
@@ -122,6 +139,8 @@ const ApplicantProfileModal = ({
         acc[skill.category].push(skill)
         return acc
     }, {} as Record<string, Skill[]>) || {}
+
+    const github = profile?.github_insights
 
     return (
         <Dialog
@@ -253,6 +272,121 @@ const ApplicantProfileModal = ({
                         )}
 
                         {/* Education */}
+
+                        {/* GitHub Insights */}
+                        {github && github.repo_count > 0 && (
+                            <div className="border border-gray-200 dark:border-gray-700 rounded-lg">
+                                <button
+                                    type="button"
+                                    onClick={() => setGithubExpanded(!githubExpanded)}
+                                    className="w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                                >
+                                    <div className="flex items-center gap-2">
+                                        {githubExpanded ? <HiChevronDown className="text-lg" /> : <HiChevronRight className="text-lg" />}
+                                        <h5 className="font-semibold flex items-center gap-2">
+                                            <span>🐙 GitHub Insights</span>
+                                            <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                                                {github.repo_count} repos
+                                            </span>
+                                        </h5>
+                                    </div>
+                                </button>
+                                {githubExpanded && (
+                                    <div className="px-4 pb-4 space-y-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+                                        <div className="flex items-center justify-between">
+                                            <div className="space-y-1">
+                                                <p className="text-sm text-gray-600 dark:text-gray-400">
+                                                    GitHub user:{' '}
+                                                    <span className="font-medium text-gray-900 dark:text-gray-100">
+                                                        {profile.github_username || github.username}
+                                                    </span>
+                                                </p>
+                                                {profile.github_url && (
+                                                    <a
+                                                        href={profile.github_url}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="text-xs text-blue-600 dark:text-blue-400 underline"
+                                                    >
+                                                        View GitHub profile
+                                                    </a>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {github.top_languages && github.top_languages.length > 0 && (
+                                            <div>
+                                                <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+                                                    Top Languages
+                                                </p>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {github.top_languages.map((lang, idx) => (
+                                                        <span
+                                                            key={idx}
+                                                            className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
+                                                        >
+                                                            {lang.name} ({lang.percent}%)
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <div>
+                                            <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+                                                Recent Repositories
+                                            </p>
+                                            <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                                                {github.repos.slice(0, 10).map((repo, idx) => (
+                                                    <div
+                                                        key={idx}
+                                                        className="flex flex-col gap-1 border border-gray-200 dark:border-gray-700 rounded p-2"
+                                                    >
+                                                        <div className="flex items-center justify-between">
+                                                            <span className="font-medium text-sm text-gray-900 dark:text-gray-100">
+                                                                {repo.name_with_owner}
+                                                            </span>
+                                                            {(repo.stars > 0 || repo.forks > 0) && (
+                                                                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                                                                    {repo.stars > 0 && <span>★ {repo.stars}</span>}
+                                                                    {repo.forks > 0 && <span>⑂ {repo.forks}</span>}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        {repo.languages && repo.languages.length > 0 && (
+                                                            <div className="flex flex-wrap gap-1 mt-1">
+                                                                {repo.languages.map((lang, i) => (
+                                                                    <span
+                                                                        key={i}
+                                                                        className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+                                                                    >
+                                                                        {lang.name} ({lang.percent}%)
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                        {repo.stack_labels && repo.stack_labels.length > 0 && (
+                                                            <div className="flex flex-wrap gap-1 mt-1">
+                                                                {repo.stack_labels.map((label, i) => (
+                                                                    <span
+                                                                        key={i}
+                                                                        className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
+                                                                    >
+                                                                        {label}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Certifications */}
                         {profile.education.length > 0 && (
                             <div>
                                 <h5 className="font-semibold mb-3 flex items-center gap-2">

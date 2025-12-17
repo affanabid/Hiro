@@ -1,4 +1,5 @@
 from django.db import models
+import uuid
 from applicants.models import Applicant
 from posts.models import Job
 
@@ -10,6 +11,12 @@ class Application(models.Model):
         ("rejected", "Rejected"),
         ("hired", "Hired"),
     ]
+
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+    )
 
     applicant = models.ForeignKey(
         Applicant,

@@ -49,7 +49,8 @@ const ApplicantForm = ({ onSubmitted }: ApplicantFormProps) => {
             await createApplication({
                 name,
                 email,
-                job: parseInt(jobParam, 10),
+                // Pass job ID (UUID) directly from query param
+                job: jobParam,
                 resume_file: file
             })
             alert('Application submitted successfully')

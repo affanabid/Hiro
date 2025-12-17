@@ -55,6 +55,10 @@ class Certification(BaseModel):
 
 class ResumeInsights(BaseModel):
     """Complete structured output schema for resume extraction"""
+    github_url: Optional[str] = Field(
+        default=None,
+        description="GitHub profile URL if present in the resume",
+    )
     summary: str = Field(
         description="2-3 sentence professional summary highlighting key strengths and experience"
     )
@@ -138,6 +142,7 @@ def extract_resume_insights(resume_bytes: bytes, filename: str = "resume.pdf") -
 
 Instructions:
 - Be thorough but concise
+- If a GitHub profile URL is mentioned anywhere, capture it as `github_url`
 - For skills, categorize them appropriately (Programming, Design, Management, Communication, etc.)
 - For experience, include company name, job title, duration, and key responsibilities
 - Calculate total years of experience from the work history

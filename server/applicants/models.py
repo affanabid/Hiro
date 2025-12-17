@@ -1,7 +1,9 @@
 from django.db import models
+import uuid
 
 
 # applicants/models.py
+
 
 class Applicant(models.Model):
     STATUS_CHOICES = [
@@ -11,6 +13,11 @@ class Applicant(models.Model):
         ("hired", "Hired"),
     ]
 
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+    )
     name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)  # Ensure email is unique
     telephone = models.CharField(max_length=20, blank=True)
@@ -70,6 +77,20 @@ class ApplicantProfile(models.Model):
     summary = models.TextField(
         blank=True,
         help_text="Professional summary/bio extracted from resume"
+    )
+    github_url = models.URLField(
+        blank=True,
+        help_text="GitHub profile URL extracted from resume"
+    )
+    github_username = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="GitHub username derived from github_url"
+    )
+    github_insights = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Cached GitHub insights (repos, languages, stacks)"
     )
     total_experience_years = models.DecimalField(
         max_digits=4,

@@ -37,7 +37,8 @@ export async function listApplications(jobId?: string | number, status?: string)
 export async function createApplication(applicationData: {
 	name: string;
 	email: string;
-	job: number; // job_id
+	// Job ID (UUID string from backend)
+	job: string;
 	resume_file: File;
 	score?: string;
 	status?: string;
@@ -45,7 +46,7 @@ export async function createApplication(applicationData: {
 	const formData = new FormData();
 	formData.append('name', applicationData.name);
 	formData.append('email', applicationData.email);
-	formData.append('job', applicationData.job.toString());
+	formData.append('job', applicationData.job);
 	formData.append('resume_file', applicationData.resume_file);
 	
 	// Optional fields with defaults

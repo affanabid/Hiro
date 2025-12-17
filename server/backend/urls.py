@@ -25,10 +25,11 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 from applicants.views import (
-    ApplicantViewSet, 
+    ApplicantViewSet,
     applicant_resume,
     get_applicant_profile,
-    refresh_applicant_profile
+    refresh_applicant_profile,
+    get_applicant_github_insights,
 )
 from users.views import (
     RegisterView,
@@ -59,9 +60,10 @@ urlpatterns = [
     # Applicants
     path("applicants/<int:pk>/resume/", applicant_resume, name="applicant-resume"),
     
-    # Applicant Profiles (NEW)
-    path("api/applicants/<int:applicant_id>/profile/", get_applicant_profile, name="applicant-profile"),
-    path("api/applicants/<int:applicant_id>/profile/refresh/", refresh_applicant_profile, name="applicant-profile-refresh"),
+    # Applicant Profiles (UUID-friendly)
+    path("api/applicants/<str:applicant_id>/profile/", get_applicant_profile, name="applicant-profile"),
+    path("api/applicants/<str:applicant_id>/profile/refresh/", refresh_applicant_profile, name="applicant-profile-refresh"),
+    path("api/applicants/<str:applicant_id>/github-insights/", get_applicant_github_insights, name="applicant-github-insights"),
     
     path("", include(router.urls)),
 

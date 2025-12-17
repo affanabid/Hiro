@@ -160,17 +160,40 @@ def trigger_profile_extraction(applicant):
         )
     
     try:
-        # Import extraction function
+        # Import extraction + GitHub helpers lazily
         from rag.resume_extractor import extract_resume_insights
-        
+        from applicants.services.github_scraper import (
+            extract_github_username_from_url,
+            get_github_insights,
+        )
+
         logger.info(f"Extracting insights for applicant {applicant.id} from application {application.id}")
-        
-        # Extract insights
+
+        # Extract insights (including github_url if present)
         insights = extract_resume_insights(
             resume_bytes=application.resume,
             filename=f"resume_{applicant.id}.pdf"
         )
-        
+
+        github_url = insights.get("github_url") or ""
+        github_username = extract_github_username_from_url(github_url) if github_url else None
+
+        github_data = {}
+        if github_username:
+            try:
+                github_data = get_github_insights(
+                    username=github_username,
+                    max_repos=50,
+                    repo_limit=30,
+                    years=3,
+                    include_forks=False,
+                )
+            except Exception as e:
+                logger.error(
+                    f"GitHub insights extraction failed for applicant {applicant.id}: {str(e)}",
+                    exc_info=True,
+                )
+
         # Create profile
         profile = ApplicantProfile.objects.create(
             applicant=applicant,
@@ -181,7 +204,10 @@ def trigger_profile_extraction(applicant):
             certifications=insights.get('certifications', []),
             summary=insights.get('summary', ''),
             total_experience_years=insights.get('total_experience_years'),
-            raw_extraction=insights
+            raw_extraction=insights,
+            github_url=github_url,
+            github_username=github_username or "",
+            github_insights=github_data,
         )
         
         logger.info(f"Profile created successfully for applicant {applicant.id}")
@@ -201,3 +227,91 @@ def trigger_profile_extraction(applicant):
             {'error': 'Failed to extract resume insights', 'detail': str(e)},
             status=http_status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+
+@api_view(['GET'])
+def get_applicant_github_insights(request, applicant_id: int):
+    """
+    GET /api/applicants/<id>/github-insights/
+
+    Returns GitHub insights for an applicant (if a GitHub URL was found in their resume).
+    Uses cached data from ApplicantProfile.github_insights when available,
+    otherwise attempts to derive username and fetch fresh insights.
+    """
+    try:
+        applicant = Applicant.objects.get(pk=applicant_id)
+    except Applicant.DoesNotExist:
+        return Response(
+            {"error": "Applicant not found"},
+            status=http_status.HTTP_404_NOT_FOUND,
+        )
+
+    try:
+        profile = applicant.profile
+    except ApplicantProfile.DoesNotExist:
+        return Response(
+            {"error": "Applicant profile not found. Extract resume insights first."},
+            status=http_status.HTTP_404_NOT_FOUND,
+        )
+
+    # If we already have cached insights, return them directly
+    if profile.github_insights:
+        return Response(
+            {
+                "github_url": profile.github_url,
+                "github_username": profile.github_username,
+                "insights": profile.github_insights,
+            }
+        )
+
+    # Attempt to derive username and fetch fresh insights
+    from applicants.services.github_scraper import (
+        extract_github_username_from_url,
+        get_github_insights,
+    )
+
+    github_url = profile.github_url or profile.raw_extraction.get("github_url") or ""
+    if not github_url:
+        return Response(
+            {"error": "No GitHub profile URL found in resume"},
+            status=http_status.HTTP_404_NOT_FOUND,
+        )
+
+    username = extract_github_username_from_url(github_url)
+    if not username:
+        return Response(
+            {"error": "Could not parse GitHub username from URL", "github_url": github_url},
+            status=http_status.HTTP_400_BAD_REQUEST,
+        )
+
+    try:
+        insights = get_github_insights(
+            username=username,
+            max_repos=50,
+            repo_limit=30,
+            years=3,
+            include_forks=False,
+        )
+    except Exception as e:
+        logger.error(
+            f"GitHub insights API failed for applicant {applicant_id}: {str(e)}",
+            exc_info=True,
+        )
+        return Response(
+            {"error": "Failed to fetch GitHub insights", "detail": str(e)},
+            status=http_status.HTTP_502_BAD_GATEWAY,
+        )
+
+    # Cache on profile for future calls
+    profile.github_url = github_url
+    profile.github_username = username
+    profile.github_insights = insights
+    profile.save(update_fields=["github_url", "github_username", "github_insights"])
+
+    return Response(
+        {
+            "github_url": github_url,
+            "github_username": username,
+            "insights": insights,
+        }
+    )

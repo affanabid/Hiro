@@ -21,7 +21,8 @@ class ApplicationCreateSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=255, required=True)
     email = serializers.EmailField(required=True)
     resume_file = serializers.FileField(required=True)
-    job = serializers.IntegerField(required=True)  # job_id
+    # Job primary key (UUID)
+    job = serializers.UUIDField(required=True)
     score = serializers.DecimalField(
         max_digits=5,
         decimal_places=2,
@@ -35,7 +36,7 @@ class ApplicationCreateSerializer(serializers.Serializer):
     )
 
     def validate_job(self, value):
-        """Validate that the job exists"""
+        """Validate that the job exists and return the Job instance."""
         try:
             job = Job.objects.get(pk=value)
             return job

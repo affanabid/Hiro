@@ -49,6 +49,10 @@ def extract_profile_async(applicant_id: int, application_id: int) -> None:
     from applicants.models import Applicant, ApplicantProfile
     from applications.models import Application
     from rag.resume_extractor import extract_resume_insights
+    from applicants.services.github_scraper import (
+        extract_github_username_from_url,
+        get_github_insights,
+    )
     
     try:
         logger.info(f"Starting profile extraction for applicant {applicant_id}")
@@ -65,11 +69,30 @@ def extract_profile_async(applicant_id: int, application_id: int) -> None:
             logger.info(f"Profile already exists for applicant {applicant_id}, skipping extraction")
             return
         
-        # Extract insights from resume
+        # Extract insights from resume (including github_url if present)
         insights = extract_resume_insights(
             resume_bytes=application.resume,
             filename=f"resume_{applicant_id}.pdf"
         )
+
+        github_url = insights.get("github_url") or ""
+        github_username = extract_github_username_from_url(github_url) if github_url else None
+
+        github_data = {}
+        if github_username:
+            try:
+                github_data = get_github_insights(
+                    username=github_username,
+                    max_repos=50,
+                    repo_limit=30,
+                    years=3,
+                    include_forks=False,
+                )
+            except Exception as e:
+                logger.error(
+                    f"GitHub insights extraction failed for applicant {applicant_id}: {str(e)}",
+                    exc_info=True,
+                )
         
         # Create profile
         ApplicantProfile.objects.create(
@@ -81,7 +104,10 @@ def extract_profile_async(applicant_id: int, application_id: int) -> None:
             certifications=insights.get('certifications', []),
             total_experience_years=insights.get('total_experience_years'),
             raw_extraction=insights,
-            extraction_source=f"Application #{application_id}"
+            extraction_source=f"Application #{application_id}",
+            github_url=github_url,
+            github_username=github_username or "",
+            github_insights=github_data,
         )
         
         logger.info(f"Profile created successfully for applicant {applicant_id}")

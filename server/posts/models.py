@@ -1,5 +1,5 @@
 from django.db import models
-
+import uuid
 
 
 # / → Job list
@@ -12,12 +12,19 @@ from django.db import models
 
 # /job/<id>/delete/ → Delete
 
+
 class Job(models.Model):
     STATUS_CHOICES = [
         ('active', 'Active'),
         ('closed', 'Closed'),
         ('paused', 'Paused'),
     ]
+
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+    )
     JOB_TYPE_CHOICES = [
         ('onsite', 'Onsite'),
         ('remote', 'Remote'),

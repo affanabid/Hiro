@@ -13,9 +13,13 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 import sys
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load environment variables from .env at project root (Hiro/server/.env)
+load_dotenv(BASE_DIR / ".env")
 
 # Add the mlops directory to Python path so Django can import it
 MLOPS_DIR = BASE_DIR.parent / 'mlops'
@@ -102,26 +106,26 @@ WSGI_APPLICATION = "backend.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "posts",
-        "USER":"postgres",
-        "PASSWORD":"affan",
-        "HOST":"localhost"
-    }
-}
-
 # DATABASES = {
 #     "default": {
 #         "ENGINE": "django.db.backends.postgresql",
-#         "NAME": os.getenv("PGDATABASE", "posts"),
-#         "USER": os.getenv("PGUSER", "postgres"),
-#         "PASSWORD": os.getenv("PGPASSWORD", ""),
-#         "HOST": os.getenv("PGHOST", "localhost"),
-#         "PORT": os.getenv("PGPORT", "5432"),
+#         "NAME": "posts",
+#         "USER":"postgres",
+#         "PASSWORD":"affan",
+#         "HOST":"localhost"
 #     }
 # }
+
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.getenv("PGDATABASE", "posts"),
+        "USER": os.getenv("PGUSER", "postgres"),
+        "PASSWORD": os.getenv("PGPASSWORD", ""),
+        "HOST": os.getenv("PGHOST", "localhost"),
+        "PORT": os.getenv("PGPORT", "5432"),
+    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators

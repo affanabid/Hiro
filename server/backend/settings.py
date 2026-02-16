@@ -14,11 +14,16 @@ from pathlib import Path
 import os
 import sys
 
+from dotenv import load_dotenv
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Load environment variables from .env located in the server root (BASE_DIR)
+load_dotenv(BASE_DIR / ".env")
+
 # Add the mlops directory to Python path so Django can import it
-MLOPS_DIR = BASE_DIR.parent / 'mlops'
+MLOPS_DIR = BASE_DIR.parent / "mlops"
 if str(MLOPS_DIR) not in sys.path:
     sys.path.insert(0, str(MLOPS_DIR))
 
@@ -26,27 +31,45 @@ if str(MLOPS_DIR) not in sys.path:
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
+
+def _get_list_from_env(var_name, default=None):
+    """
+    Helper to parse comma-separated environment variables into a list.
+    """
+    raw_value = os.getenv(var_name)
+    if raw_value:
+        return [item.strip() for item in raw_value.split(",") if item.strip()]
+    if default is None:
+        return []
+    return [item.strip() for item in default.split(",") if item.strip()]
+
+
+# Environment
+DJANGO_ENV = os.getenv("DJANGO_ENV", "development").lower()
+
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-bt25))g+35(o^2p05o@#q%g1($2%zf-oqn0&9a%abx4^@lcw57"
+SECRET_KEY = os.getenv(
+    "DJANGO_SECRET_KEY",
+    "django-insecure-development-key-change-me",
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv("DJANGO_DEBUG", "True").lower() == "true"
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = _get_list_from_env(
+    "DJANGO_ALLOWED_HOSTS",
+    default="localhost,127.0.0.1",
+)
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:5174",
-    "http://127.0.0.1:5174",
-]
+CORS_ALLOWED_ORIGINS = _get_list_from_env(
+    "DJANGO_CORS_ALLOWED_ORIGINS",
+    default="http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174",
+)
 
-CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:5174",
-    "http://127.0.0.1:5174",
-]
+CSRF_TRUSTED_ORIGINS = _get_list_from_env(
+    "DJANGO_CSRF_TRUSTED_ORIGINS",
+    default="http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174",
+)
 
 CORS_ALLOW_CREDENTIALS = True
 
@@ -120,23 +143,13 @@ WSGI_APPLICATION = "backend.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "posts",
-        "USER":"postgres",
-        "PASSWORD":"affan",
-        "HOST":"localhost"
+        "NAME": os.getenv("PGDATABASE", "posts"),
+        "USER": os.getenv("PGUSER", "postgres"),
+        "PASSWORD": os.getenv("PGPASSWORD", ""),
+        "HOST": os.getenv("PGHOST", "localhost"),
+        "PORT": os.getenv("PGPORT", "5432"),
     }
 }
-
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.postgresql",
-#         "NAME": os.getenv("PGDATABASE", "posts"),
-#         "USER": os.getenv("PGUSER", "postgres"),
-#         "PASSWORD": os.getenv("PGPASSWORD", ""),
-#         "HOST": os.getenv("PGHOST", "localhost"),
-#         "PORT": os.getenv("PGPORT", "5432"),
-#     }
-# }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -186,3 +199,17 @@ MEDIA_ROOT = BASE_DIR / "media"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+# Production-specific hardening when DJANGO_ENV=production
+if DJANGO_ENV == "production":
+    DEBUG = False
+
+    # In production, do not fall back to permissive defaults.
+    if not ALLOWED_HOSTS:
+        raise RuntimeError(
+            "DJANGO_ENV=production requires DJANGO_ALLOWED_HOSTS to be set."
+        )
+
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True

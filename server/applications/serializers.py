@@ -13,6 +13,48 @@ from posts.models import Job
 logger = logging.getLogger(__name__)
 
 
+MAX_RESUME_SIZE_MB = 10
+ALLOWED_RESUME_CONTENT_TYPES = {
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+}
+ALLOWED_RESUME_EXTENSIONS = {".pdf", ".doc", ".docx"}
+
+
+def validate_resume_file_obj(file):
+    """
+    Shared validation for resume uploads.
+    Enforces basic size and type checks.
+    """
+    if not file:
+        raise ValidationError({"resume_file": "Resume file is required."})
+
+    max_bytes = MAX_RESUME_SIZE_MB * 1024 * 1024
+    size = getattr(file, "size", None)
+    if size is not None and size > max_bytes:
+        raise ValidationError(
+            {"resume_file": f"Resume file is too large (>{MAX_RESUME_SIZE_MB} MB)."}
+        )
+
+    content_type = getattr(file, "content_type", None)
+    ext = os.path.splitext(getattr(file, "name", ""))[1].lower()
+
+    if content_type and content_type not in ALLOWED_RESUME_CONTENT_TYPES:
+        raise ValidationError(
+            {
+                "resume_file": "Unsupported file type. Allowed: PDF, DOC, DOCX."
+            }
+        )
+
+    if ext and ext not in ALLOWED_RESUME_EXTENSIONS:
+        raise ValidationError(
+            {
+                "resume_file": "Unsupported file extension. Allowed: .pdf, .doc, .docx."
+            }
+        )
+
+
 class ApplicationCreateSerializer(serializers.Serializer):
     """
     Serializer for creating applications from frontend submission.
@@ -33,6 +75,10 @@ class ApplicationCreateSerializer(serializers.Serializer):
         required=False,
         default="pending"
     )
+
+    def validate_resume_file(self, value):
+        validate_resume_file_obj(value)
+        return value
 
     def validate_job(self, value):
         """Validate that the job exists"""
@@ -177,6 +223,12 @@ class ApplicationSerializer(serializers.ModelSerializer):
             # Don't allow client to send raw bytes directly
             "resume": {"read_only": True},
         }
+
+    def validate_resume_file(self, value):
+        if value is None:
+            return value
+        validate_resume_file_obj(value)
+        return value
 
     def create(self, validated_data):
         # Get uploaded file (if any)

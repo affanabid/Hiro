@@ -7,7 +7,6 @@ from .models import Applicant, ApplicantProfile
 from .serializers import ApplicantSerializer, ApplicantProfileSerializer
 from applications.models import Application
 from posts.models import Job
-from users.authentication import CsrfExemptSessionAuthentication
 import logging
 import asyncio
 from asgiref.sync import async_to_sync
@@ -27,7 +26,6 @@ class ApplicantViewSet(viewsets.ModelViewSet):
     - PATCH /applicants/<id>/   -> partial update
     - DELETE /applicants/<id>/  -> delete
     """
-    authentication_classes = (CsrfExemptSessionAuthentication,)
     permission_classes = [permissions.IsAuthenticated]
     queryset = Applicant.objects.all().order_by("-id")
     serializer_class = ApplicantSerializer
@@ -94,6 +92,7 @@ def applicant_resume(request, pk):
         content_type="application/pdf",
     )
     response["Content-Disposition"] = f'inline; filename="resume_{pk}.pdf"'
+    response["X-Content-Type-Options"] = "nosniff"
     return response
 
 
@@ -102,7 +101,6 @@ def applicant_resume(request, pk):
 # ============================================
 
 @api_view(['GET'])
-@authentication_classes([CsrfExemptSessionAuthentication])
 @permission_classes([permissions.IsAuthenticated])
 def get_applicant_profile(request, applicant_id):
     """
@@ -139,7 +137,6 @@ def get_applicant_profile(request, applicant_id):
 
 
 @api_view(['POST'])
-@authentication_classes([CsrfExemptSessionAuthentication])
 @permission_classes([permissions.IsAuthenticated])
 def refresh_applicant_profile(request, applicant_id):
     """
@@ -173,7 +170,6 @@ def refresh_applicant_profile(request, applicant_id):
 
 
 @api_view(['POST'])
-@authentication_classes([CsrfExemptSessionAuthentication])
 @permission_classes([permissions.IsAuthenticated])
 def scrape_social_profile(request, applicant_id):
     """

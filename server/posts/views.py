@@ -7,7 +7,6 @@ from django.urls import reverse_lazy
 from .models import Job
 from rest_framework import generics, permissions
 from .serializers import JobSerializer
-from users.authentication import CsrfExemptSessionAuthentication
 from .permissions import JobAccessPermission
 class JobListView(ListView):
     model = Job
@@ -65,7 +64,6 @@ class JobDeleteView(DeleteView):
 
 
 class JobListCreateAPIView(generics.ListCreateAPIView):
-    authentication_classes = (CsrfExemptSessionAuthentication,)
     permission_classes = [permissions.IsAuthenticated]
     queryset = Job.objects.all()
     serializer_class = JobSerializer
@@ -77,7 +75,6 @@ class JobListCreateAPIView(generics.ListCreateAPIView):
         serializer.save(created_by=self.request.user)
 
 class JobRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
-    authentication_classes = (CsrfExemptSessionAuthentication,)
     permission_classes = [JobAccessPermission]
     queryset = Job.objects.all()
     serializer_class = JobSerializer

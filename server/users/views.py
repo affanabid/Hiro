@@ -1,15 +1,12 @@
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.utils import timezone
-from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_exempt
 
 from rest_framework import status, permissions, authentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import UserProfile, LoginHistory
-from .authentication import CsrfExemptSessionAuthentication
 from .serializers import (
     UserSerializer,
     UserRegisterSerializer,
@@ -20,14 +17,13 @@ from .serializers import (
 )
 
 
-@method_decorator(csrf_exempt, name="dispatch")
 class RegisterView(APIView):
     """
     POST /users/register/
     Create a new user + profile.
     """
     permission_classes = [permissions.AllowAny]
-    authentication_classes = []  # no auth, open endpoint
+    authentication_classes = []  # no auth, open endpoint; CSRF is enforced by middleware
 
     def post(self, request):
         serializer = UserRegisterSerializer(data=request.data)
@@ -48,7 +44,6 @@ class RegisterView(APIView):
         )
 
 
-@method_decorator(csrf_exempt, name="dispatch")
 class LoginView(APIView):
     """
     POST /users/login/
@@ -56,7 +51,7 @@ class LoginView(APIView):
     Creates a Django session (cookie).
     """
     permission_classes = [permissions.AllowAny]
-    authentication_classes = []  # CSRF-free
+    authentication_classes = []  # CSRF is enforced by middleware
 
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
@@ -89,14 +84,12 @@ class LoginView(APIView):
         )
 
 
-@method_decorator(csrf_exempt, name="dispatch")
 class LogoutView(APIView):
     """
     POST /users/logout/
     Clears session + logs logout.
     """
     permission_classes = [permissions.IsAuthenticated]
-    authentication_classes = (CsrfExemptSessionAuthentication,)
 
     def post(self, request):
         user = request.user
@@ -127,7 +120,6 @@ class MeView(APIView):
     Uses session cookie to get current user.
     """
     permission_classes = [permissions.IsAuthenticated]
-    authentication_classes = (CsrfExemptSessionAuthentication,)
 
     def get(self, request):
         return Response(
@@ -136,14 +128,12 @@ class MeView(APIView):
         )
 
 
-@method_decorator(csrf_exempt, name="dispatch")
 class ChangePasswordView(APIView):
     """
     POST /users/change-password/
     Body: { "old_password": "...", "new_password": "..." }
     """
     permission_classes = [permissions.IsAuthenticated]
-    authentication_classes = (CsrfExemptSessionAuthentication,)
 
     def post(self, request):
         serializer = ChangePasswordSerializer(data=request.data)
@@ -184,7 +174,6 @@ class LoginHistoryView(APIView):
     List recent login/logout events for current user.
     """
     permission_classes = [permissions.IsAuthenticated]
-    authentication_classes = (CsrfExemptSessionAuthentication,)
 
     def get(self, request):
         qs = (
@@ -202,7 +191,6 @@ class AccountSettingView(APIView):
     Combines User and UserProfile data into the format expected by the frontend.
     """
     permission_classes = [permissions.IsAuthenticated]
-    authentication_classes = (CsrfExemptSessionAuthentication,)
 
     def get(self, request):
         user = request.user

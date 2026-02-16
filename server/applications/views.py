@@ -13,7 +13,6 @@ from .serializers import ApplicationSerializer, ApplicationCreateSerializer
 from applicants.models import Applicant
 from posts.models import Job
 from django.db.models.functions import TruncMonth
-from users.authentication import CsrfExemptSessionAuthentication
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +27,6 @@ class ApplicationListCreateAPIView(generics.ListCreateAPIView):
     1. ApplicationCreateSerializer format (name, email, resume_file, job) - for frontend submissions
     2. ApplicationSerializer format (applicant, job, resume_file) - for direct API calls
     """
-    authentication_classes = (CsrfExemptSessionAuthentication,)
     queryset = Application.objects.all().order_by("-date")
     
     def get_permissions(self):
@@ -120,7 +118,6 @@ class ApplicationRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIV
     PATCH /api/applications/<pk>/ -> Partial update
     DELETE /api/applications/<pk>/ -> Delete
     """
-    authentication_classes = (CsrfExemptSessionAuthentication,)
     permission_classes = [permissions.IsAuthenticated]
     queryset = Application.objects.all()
     serializer_class = ApplicationSerializer
@@ -158,7 +155,6 @@ class CustomerStatisticAPIView(APIView):
     """
     GET /api/crm/customers-statistic -> Get applicant statistics
     """
-    authentication_classes = (CsrfExemptSessionAuthentication,)
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
@@ -243,7 +239,6 @@ class SalesDashboardAPIView(APIView):
     """
     POST /api/sales/dashboard -> Get dashboard data
     """
-    authentication_classes = (CsrfExemptSessionAuthentication,)
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
@@ -418,4 +413,5 @@ def application_resume(request, pk):
         content_type="application/pdf",
     )
     response["Content-Disposition"] = f'inline; filename="resume_{pk}.pdf"'
+    response["X-Content-Type-Options"] = "nosniff"
     return response

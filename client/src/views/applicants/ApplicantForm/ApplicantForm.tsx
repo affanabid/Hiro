@@ -14,7 +14,11 @@ type ApplicantFormProps = {
 
 // Validation constants
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
-const SUPPORTED_FILE_TYPES = ['application/pdf']
+const SUPPORTED_FILE_TYPES = [
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+]
 
 // Validation schema using Yup
 const validationSchema = Yup.object().shape({
@@ -36,7 +40,7 @@ const validationSchema = Yup.object().shape({
         .test('fileExists', 'Please upload your resume', (value) => {
             return value instanceof File
         })
-        .test('fileType', 'Only PDF files are allowed', (value) => {
+        .test('fileType', 'Only PDF, DOC, or DOCX files are allowed', (value) => {
             if (!value) return true
             return value instanceof File && SUPPORTED_FILE_TYPES.includes(value.type)
         })
@@ -172,13 +176,13 @@ const ApplicantForm = ({ onSubmitted }: ApplicantFormProps) => {
                         </FormItem>
 
                         <FormItem
-                            label="Resume (PDF only, max 5MB)"
+                            label="Resume (max 5MB)"
                             invalid={Boolean(errors.resume && touched.resume)}
                             errorMessage={errors.resume as string}
                         >
                             <input
                                 type="file"
-                                accept=".pdf,application/pdf"
+                                accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                                 aria-label="resume-file"
                                 className={`w-full p-2 border rounded-md ${errors.resume && touched.resume
                                     ? 'border-red-500 bg-red-50 dark:bg-red-900/20'
@@ -191,7 +195,7 @@ const ApplicantForm = ({ onSubmitted }: ApplicantFormProps) => {
                                 onBlur={() => setFieldTouched('resume', true)}
                             />
                             <p className="text-xs text-gray-500 mt-1">
-                                Accepted format: PDF. Maximum file size: 5MB
+                                Accepted formats: PDF, DOC, DOCX. Maximum file size: 5MB
                             </p>
                         </FormItem>
 
